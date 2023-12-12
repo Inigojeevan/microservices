@@ -6,29 +6,25 @@ import (
 	"net/http"
 	"os"
 	"time"
-
-	jwt "github.com/golang-jwt/jwt/v5"
+	"github.com/dgrijalva/jwt-go"
 )
 
 var mySigningKey = []byte(os.Getenv("SECRET_KEY"))
 
-func GetJWT() (string, error) {
-	token := jwt.New(jwt.SigningMethodHS256)
-	claims := token.Claims.(jwt.MapClaims)
+func GetJWT() (string, error){
+	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
+		Issuer: "jwtgo.io",
+		ExpiresAt: time.Now().Add(time.Hour*1 ).Unix(),
+		Audience: "billing.jwtcreator.com",
+	})
 
-	claims["authorized"] = true
-	claims["owner"] = "Inigojeevan"
-	claims["aud"] = "billing.jwtcreator.com"
-	claims["iss"] = "jwtgo.io"
-	claims["exp"] = time.Now().Add(time.Minute * 1).Unix()
+	token, err := claims.SignedString(mySigningKey)
 
-	tokenString, err := token.SignedString(mySigningKey)
-
-	if err != nil {
+	if err!=nil{
 		fmt.Errorf("Something went wrong: %s", err.Error())
 		return "", err
 	}
-	return tokenString, nil
+	return token, nil
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
